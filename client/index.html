@@ -5,20 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Undercover — Party Word Game</title>
     <!--
-      Google AdSense (future):
-      1. Get approved at https://www.google.com/adsense (requires the site to
-         be live already — see DEPLOY.md).
-      2. Set VITE_ADSENSE_CLIENT_ID=ca-pub-XXXXXXXXXXXXXXXX and
-         VITE_ADSENSE_SLOT_ID=your-ad-unit-slot-id as env vars (client/.env
-         locally, or your host's dashboard in production).
-      3. Uncomment the script tag below. Vite replaces %VITE_ADSENSE_CLIENT_ID%
-         with the env var at build time.
-      4. Rebuild/redeploy. See src/components/AdSlot.jsx for where ad units
-         render in-app (lobby + game-over screens).
-
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=%VITE_ADSENSE_CLIENT_ID%"
-        crossorigin="anonymous"></script>
+      Google AdSense — site verification + ad-serving script.
+      Reads the publisher ID from VITE_ADSENSE_CLIENT_ID at build time (Vite
+      replaces %VITE_ADSENSE_CLIENT_ID% below). Set that env var in Render's
+      dashboard (Environment tab) to ca-pub-3549053541503102, then redeploy.
     -->
+    <meta name="google-adsense-account" content="%VITE_ADSENSE_CLIENT_ID%" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=%VITE_ADSENSE_CLIENT_ID%"
+      crossorigin="anonymous"></script>
   </head>
   <body>
     <div id="root"></div>
