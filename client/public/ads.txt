@@ -1,0 +1,13 @@
+# ads.txt — required by Google AdSense once you're approved.
+#
+# After you're approved, AdSense will show you the exact line to add here,
+# it looks like:
+#
+#   google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+#
+# Replace pub-XXXXXXXXXXXXXXXX with your publisher ID (same digits as your
+# VITE_ADSENSE_CLIENT_ID, minus the "ca-" prefix), uncomment it below, and
+# redeploy. This file is served at https://yourdomain.com/ads.txt — Vite
+# copies anything in client/public/ to the build output automatically.
+#
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

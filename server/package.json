@@ -1,0 +1,20 @@
+{
+  "name": "undercover-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Realtime backend for Undercover - a social deduction word game (like Skribbl.io but text/clue based).",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "nanoid": "^5.0.7",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
