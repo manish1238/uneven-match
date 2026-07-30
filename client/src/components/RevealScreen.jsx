@@ -16,7 +16,15 @@ export default function RevealScreen({ state, isHost, onContinue }) {
       <div className="card">
         <h2>Round {lastResult?.round} results</h2>
 
-        {lastResult?.tie ? (
+        {lastResult?.decoySavedName ? (
+          <div className="reveal-result">
+            <PlayerAvatar name={lastResult.decoySavedName} size={64} />
+            <p className="reveal-text">
+              <strong>{lastResult.decoySavedName}</strong> was voted out — but activated their{" "}
+              <strong className="role-decoy">🛡️ DECOY</strong> and survived!
+            </p>
+          </div>
+        ) : lastResult?.tie ? (
           <p className="reveal-text">It's a tie — no one is eliminated this round.</p>
         ) : lastResult?.eliminatedId ? (
           <div className="reveal-result">

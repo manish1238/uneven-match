@@ -18,7 +18,7 @@ export default function Lobby({ state, isHost, onStart, onUpdateSettings, server
   const settings = state.settings || {};
 
   return (
-    <div className="screen">
+    <div className="screen screen--with-ad">
       <div className="card wide">
         <div className="room-code-banner">
           Room code <strong>{state.code}</strong> — share it with friends
@@ -110,9 +110,9 @@ export default function Lobby({ state, isHost, onStart, onUpdateSettings, server
         ) : (
           <p className="waiting-text">Waiting for the host to start the game…</p>
         )}
-
-        <AdSlot label="Lobby" slot="9285423062" format="fluid" layoutKey="-6t+ed+2i-1n-4w" />
       </div>
+
+      <AdSlot label="Lobby" slot="9285423062" format="fluid" layoutKey="-6t+ed+2i-1n-4w" />
     </div>
   );
 }

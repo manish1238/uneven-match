@@ -1,14 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap");
+
+/*
+  Design direction: "stakeout dossier" — this is a social-deduction game
+  about spies hiding among civilians, so the UI leans into that instead of
+  generic "party app purple": a dark surveillance-room backdrop with drifting
+  neon glow and a slow scanner sweep, off-white "case file" cards, a
+  typewriter/mono face for anything that reads like a report (room codes,
+  timers, secret words), and a bold stencil display face for headlines.
+  Role reveals get a literal rubber-stamp animation — the one signature
+  moment, tied directly to the game's actual core mechanic.
+*/
+
 :root {
-  --bg-1: #1e1b4b;
-  --bg-2: #4c1d95;
-  --card-bg: #ffffff;
-  --text-dark: #1f2937;
-  --text-muted: #6b7280;
-  --primary: #7c3aed;
-  --primary-dark: #5b21b6;
-  --danger: #ef4444;
-  --success: #10b981;
-  --border-radius: 16px;
+  --ink: #0b0e14;
+  --ink-2: #141a29;
+  --paper: #f3eee0;
+  --paper-line: #e2d9c2;
+  --cyan: #2ff3e0;
+  --magenta: #ff3d81;
+  --gold: #ffc93c;
+  --violet: #8b5cf6;
+  --violet-deep: #5b2eff;
+  --text-dark: #1a1a1a;
+  --text-muted: #6b6455;
+  --danger: var(--magenta);
+  --success: var(--cyan);
+
+  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "Space Mono", "Courier New", monospace;
+
+  --radius: 14px;
+  --radius-sm: 8px;
 }
 
 * {
@@ -17,10 +40,66 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
   min-height: 100vh;
+  font-family: var(--font-body);
   color: var(--text-dark);
+  background: var(--ink);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Ambient backdrop: drifting neon glow + a slow scanner sweep. Purely
+   atmospheric (fixed, non-interactive), disabled under reduced motion. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  background: radial-gradient(circle at 18% 25%, rgba(47, 243, 224, 0.16), transparent 40%),
+    radial-gradient(circle at 82% 70%, rgba(255, 61, 129, 0.14), transparent 42%),
+    radial-gradient(circle at 50% 95%, rgba(255, 201, 60, 0.1), transparent 38%);
+  filter: blur(50px);
+  animation: driftGlow 24s ease-in-out infinite alternate;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 240px;
+  background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.07) 50%, transparent 100%);
+  animation: scanSweep 8s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+@keyframes driftGlow {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(3%, -3%) scale(1.06);
+  }
+}
+
+@keyframes scanSweep {
+  0% {
+    transform: translateY(-240px);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after {
+    animation: none;
+  }
 }
 
 .screen {
@@ -29,15 +108,71 @@ body {
   align-items: center;
   justify-content: center;
   padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Screens that also render an <AdSlot>: stack on mobile, side-rail on
+   desktop so the ad doesn't interrupt the vertical flow of the card. */
+.screen--with-ad {
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 1100px) {
+  .screen--with-ad {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  .screen--with-ad .ad-frame {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 40px;
+  }
 }
 
 .card {
-  background: var(--card-bg);
-  border-radius: var(--border-radius);
-  padding: 32px;
+  background: var(--paper);
+  color: var(--text-dark);
+  border-radius: var(--radius);
+  padding: 36px 32px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+  position: relative;
+  overflow: hidden;
+  animation: cardIn 0.35s ease both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 28px;
+  right: 28px;
+  height: 5px;
+  background: repeating-linear-gradient(90deg, var(--violet) 0 14px, transparent 14px 22px);
 }
 
 .card.wide {
@@ -45,16 +180,20 @@ body {
 }
 
 .title {
-  margin: 0 0 8px;
-  font-size: 2rem;
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 2.1rem;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 22px rgba(139, 92, 246, 0.3);
 }
 
 .subtitle {
   color: var(--text-muted);
   text-align: center;
   margin-bottom: 24px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .join-form {
@@ -75,19 +214,23 @@ input,
 select {
   font-size: 1rem;
   padding: 10px 12px;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--paper-line);
   outline: none;
   font-family: inherit;
+  background: #fff;
+  color: var(--text-dark);
 }
 
 input:focus,
 select:focus {
-  border-color: var(--primary);
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
 .room-code-input {
-  letter-spacing: 4px;
+  font-family: var(--font-mono);
+  letter-spacing: 5px;
   text-transform: uppercase;
   font-weight: 700;
 }
@@ -100,27 +243,34 @@ select:focus {
 .tab {
   flex: 1;
   padding: 10px;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
-  background: white;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--paper-line);
+  background: #fff;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dark);
 }
 
 .tab.active {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: #f5f3ff;
+  border-color: var(--violet);
+  color: var(--violet-deep);
+  background: #f2edff;
 }
 
 .btn {
-  padding: 12px 20px;
-  border-radius: 10px;
+  padding: 13px 20px;
+  border-radius: var(--radius-sm);
   border: none;
-  font-weight: 700;
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  transition: transform 0.1s ease, opacity 0.1s ease;
+  transition: transform 0.1s ease, box-shadow 0.2s ease, opacity 0.1s ease;
 }
 
 .btn:active {
@@ -133,12 +283,14 @@ select:focus {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--violet), var(--violet-deep));
   color: white;
+  box-shadow: 0 8px 24px rgba(91, 46, 255, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-dark);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.4), 0 10px 28px rgba(91, 46, 255, 0.5);
+  transform: translateY(-1px);
 }
 
 .error-text {
@@ -148,13 +300,16 @@ select:focus {
 }
 
 .room-code-banner {
-  background: #f5f3ff;
-  color: var(--primary-dark);
-  padding: 10px 16px;
-  border-radius: 10px;
+  background: var(--ink);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
   text-align: center;
   margin-bottom: 20px;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  border: 1px dashed rgba(47, 243, 224, 0.4);
 }
 
 .player-list,
@@ -172,8 +327,8 @@ select:focus {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 10px;
-  background: #f9fafb;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.035);
 }
 
 .avatar {
@@ -184,19 +339,24 @@ select:focus {
   color: white;
   font-weight: 700;
   flex-shrink: 0;
+  transition: box-shadow 0.2s ease;
 }
 
 .badge {
   margin-left: auto;
-  background: var(--primary);
+  background: var(--violet);
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   padding: 3px 8px;
   border-radius: 999px;
 }
 
 .badge-you {
-  background: var(--success);
+  background: var(--cyan);
+  color: var(--ink);
 }
 
 .start-controls {
@@ -220,14 +380,36 @@ select:focus {
   text-align: center;
 }
 
-.ad-slot {
-  margin-top: 24px;
-  border: 2px dashed #d1d5db;
-  border-radius: 10px;
-  padding: 16px;
+/* Ad units — deliberately calmer than the game chrome (desaturated, dashed
+   "redacted" border) so they read as clearly separate from gameplay, per
+   AdSense's own disclosure requirements, while still fitting the theme. */
+.ad-frame {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-sm);
+  padding: 18px 14px 14px;
+  min-height: 90px;
+}
+
+.ad-frame-label {
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+}
+
+.ad-frame-placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.8rem;
   text-align: center;
-  color: #9ca3af;
-  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .round-header {
@@ -235,16 +417,20 @@ select:focus {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .category-chip {
-  background: #f5f3ff;
-  color: var(--primary-dark);
+  background: var(--ink);
+  color: var(--gold);
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 /* Flip card */
@@ -273,34 +459,40 @@ select:focus {
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 .word-card-front {
-  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  background: linear-gradient(135deg, var(--ink-2), #1c2338);
+  border: 2px solid var(--violet);
+  box-shadow: 0 0 26px rgba(139, 92, 246, 0.45), inset 0 0 24px rgba(139, 92, 246, 0.08);
   color: white;
 }
 
 .word-card-label {
-  font-size: 0.75rem;
-  opacity: 0.8;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  opacity: 0.75;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  color: var(--cyan);
 }
 
 .word-card-text {
-  font-size: 1.6rem;
-  font-weight: 800;
-  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin-top: 8px;
+  text-align: center;
+  padding: 0 12px;
 }
 
 .word-card-back {
-  background: #f3f4f6;
+  background: var(--paper);
   transform: rotateY(180deg);
   font-size: 3rem;
 }
@@ -325,9 +517,9 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f9fafb;
+  background: rgba(0, 0, 0, 0.035);
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .clue-name {
@@ -347,7 +539,7 @@ select:focus {
 .player-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
   justify-content: center;
 }
 
@@ -360,20 +552,43 @@ select:focus {
   position: relative;
 }
 
+/* Whoever's turn it is gets a pulsing gold ring — functional (tells you who
+   to watch), not just decorative. */
+.player-strip-item.is-turn .avatar {
+  box-shadow: 0 0 0 3px var(--gold), 0 0 16px rgba(255, 201, 60, 0.6);
+  animation: turnPulse 1.3s ease-in-out infinite;
+}
+
+@keyframes turnPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--gold), 0 0 10px rgba(255, 201, 60, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--gold), 0 0 20px rgba(255, 201, 60, 0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-strip-item.is-turn .avatar {
+    animation: none;
+  }
+}
+
 .strikethrough {
   text-decoration: line-through;
   color: var(--text-muted);
 }
 
 .check {
-  color: var(--success);
+  color: var(--cyan);
   font-weight: 700;
 }
 
 .eliminated-banner {
   text-align: center;
   color: var(--danger);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .vote-recap {
@@ -393,15 +608,18 @@ select:focus {
   align-items: center;
   gap: 6px;
   padding: 12px;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-  background: white;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--paper-line);
+  background: #fff;
   cursor: pointer;
   font-weight: 600;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .vote-card:hover:not(.disabled) {
-  border-color: var(--primary);
+  border-color: var(--magenta);
+  box-shadow: 0 0 0 1px rgba(255, 61, 129, 0.2), 0 8px 20px rgba(255, 61, 129, 0.18);
+  transform: translateY(-2px);
 }
 
 .vote-card.disabled {
@@ -422,16 +640,199 @@ select:focus {
   font-size: 1.05rem;
 }
 
+/* Role tags styled as rubber-case stamps — mono face, hard border, slight
+   tilt — and animated in with a literal "stamp slam" the moment a role is
+   revealed. This is the app's one signature move. */
+.role-undercover,
+.role-civilian,
+.role-mrwhite {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 2px 9px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+  animation: stampIn 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes stampIn {
+  0% {
+    transform: scale(2.4) rotate(-3deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.9) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-3deg);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-undercover,
+  .role-civilian,
+  .role-mrwhite {
+    animation: none;
+  }
+}
+
 .role-undercover {
-  color: var(--danger);
+  color: var(--magenta);
 }
 
 .role-civilian {
-  color: var(--success);
+  color: #0e9c8f;
 }
 
 .role-mrwhite {
-  color: #d97706;
+  color: #b8860f;
+}
+
+.role-decoy {
+  color: var(--gold);
+}
+
+/* Scoreboard leader */
+.player-row.is-leader {
+  background: rgba(255, 201, 60, 0.12);
+  border: 1px solid rgba(255, 201, 60, 0.4);
+}
+
+.trophy {
+  font-size: 1.1rem;
+}
+
+/* Gadget panel — the hidden one-time ability every player secretly holds. */
+.gadget-panel {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(47, 243, 224, 0.06));
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.gadget-panel.is-spent {
+  padding: 10px 16px;
+}
+
+.gadget-panel.is-spent .gadget-header {
+  opacity: 0.55;
+  margin-bottom: 0;
+}
+
+.gadget-panel.is-spent .gadget-result {
+  opacity: 1;
+}
+
+.gadget-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.gadget-icon {
+  font-size: 1.2rem;
+}
+
+.gadget-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gadget-hint {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.btn-gadget {
+  background: var(--ink);
+  color: var(--cyan);
+  border: 1px solid rgba(47, 243, 224, 0.4);
+  font-size: 0.8rem;
+  padding: 9px 16px;
+}
+
+.btn-gadget:hover:not(:disabled) {
+  box-shadow: 0 0 14px rgba(47, 243, 224, 0.4);
+}
+
+.gadget-waiting,
+.gadget-armed {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.gadget-armed {
+  color: #0e9c8f;
+  font-weight: 700;
+}
+
+.gadget-target-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.gadget-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--paper-line);
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+
+.gadget-target:hover {
+  border-color: var(--violet);
+}
+
+.gadget-cancel {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.gadget-result {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--ink);
+  color: var(--cyan);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.gadget-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
 }
 
 .timer {
@@ -446,35 +847,55 @@ select:focus {
   flex: 1;
   height: 8px;
   border-radius: 999px;
-  background: #e5e7eb;
+  background: var(--paper-line);
   overflow: hidden;
 }
 
 .timer-bar {
   height: 100%;
-  background: var(--primary);
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  box-shadow: 0 0 10px rgba(47, 243, 224, 0.5);
   transition: width 0.2s linear;
 }
 
 .timer-text {
+  font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.85rem;
-  min-width: 28px;
+  min-width: 30px;
   text-align: right;
   color: var(--text-muted);
 }
 
 .timer-low .timer-bar {
-  background: var(--danger);
+  background: var(--magenta);
+  box-shadow: 0 0 16px rgba(255, 61, 129, 0.75);
+  animation: timerPulse 0.8s ease-in-out infinite;
 }
 
 .timer-low .timer-text {
-  color: var(--danger);
+  color: var(--magenta);
+}
+
+@keyframes timerPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-low .timer-bar {
+    animation: none;
+  }
 }
 
 .settings-panel {
-  background: #f9fafb;
-  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.035);
+  border-radius: var(--radius-sm);
   padding: 16px;
   margin-bottom: 20px;
 }
@@ -482,7 +903,10 @@ select:focus {
 .settings-panel h3 {
   margin-top: 0;
   margin-bottom: 12px;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .range-row {
@@ -498,6 +922,7 @@ select:focus {
   width: 100%;
   padding: 0;
   border: none;
+  accent-color: var(--violet);
 }
 
 .checkbox-row {
@@ -512,14 +937,21 @@ select:focus {
 
 .checkbox-row input {
   margin-top: 3px;
+  accent-color: var(--violet);
 }
 
 .winner-banner {
   text-align: center;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 22px rgba(139, 92, 246, 0.3);
 }
 
 .word-reveal {
   margin-left: auto;
   color: var(--text-muted);
   font-style: italic;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
 }

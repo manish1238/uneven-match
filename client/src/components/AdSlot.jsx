@@ -45,23 +45,29 @@ export default function AdSlot({ label = "Ad", slot, format = "auto", layoutKey,
   if (!configured) {
     if (!import.meta.env.DEV) return null;
     return (
-      <div className="ad-slot" aria-hidden="true">
-        <span>{label} space (set VITE_ADSENSE_CLIENT_ID + pass a slot to activate)</span>
+      <div className="ad-frame" aria-hidden="true">
+        <span className="ad-frame-label">Advertisement</span>
+        <div className="ad-frame-placeholder">
+          {label} space — set VITE_ADSENSE_CLIENT_ID + pass a slot to activate
+        </div>
       </div>
     );
   }
 
   return (
-    <ins
-      className="adsbygoogle"
-      style={{ display: "block", textAlign: layout === "in-article" ? "center" : undefined }}
-      data-ad-client={ADSENSE_CLIENT}
-      data-ad-slot={slot}
-      data-ad-format={format}
-      data-ad-layout-key={layoutKey}
-      data-ad-layout={layout}
-      data-full-width-responsive={format === "auto" ? "true" : undefined}
-      aria-label={`${label} advertisement`}
-    />
+    <div className="ad-frame">
+      <span className="ad-frame-label">Advertisement</span>
+      <ins
+        className="adsbygoogle"
+        style={{ display: "block", textAlign: layout === "in-article" ? "center" : undefined }}
+        data-ad-client={ADSENSE_CLIENT}
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-ad-layout-key={layoutKey}
+        data-ad-layout={layout}
+        data-full-width-responsive={format === "auto" ? "true" : undefined}
+        aria-label={`${label} advertisement`}
+      />
+    </div>
   );
 }

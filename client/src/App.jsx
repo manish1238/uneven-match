@@ -12,11 +12,13 @@ export default function App() {
   const [state, setState] = useState(null); // sanitized room state from server
   const [error, setError] = useState("");
   const [connectionError, setConnectionError] = useState(false);
+  const [intelResult, setIntelResult] = useState(null);
 
   useEffect(() => {
     function onState(s) {
       setState(s);
       setError("");
+      if (s.phase !== "vote") setIntelResult(null);
     }
     function onError(msg) {
       setError(msg);
@@ -24,16 +26,21 @@ export default function App() {
     function onConnectError() {
       setConnectionError(true);
     }
+    function onIntelResult(result) {
+      setIntelResult(result);
+    }
 
     socket.on("room:state", onState);
     socket.on("room:error", onError);
     socket.on("connect_error", onConnectError);
     socket.on("connect", () => setConnectionError(false));
+    socket.on("gadget:intelResult", onIntelResult);
 
     return () => {
       socket.off("room:state", onState);
       socket.off("room:error", onError);
       socket.off("connect_error", onConnectError);
+      socket.off("gadget:intelResult", onIntelResult);
     };
   }, []);
 
@@ -83,6 +90,18 @@ export default function App() {
     socket.emit("game:playAgain");
   }
 
+  function handleArmDecoy() {
+    socket.emit("game:armDecoy");
+  }
+
+  function handleArmDoubleAgent() {
+    socket.emit("game:armDoubleAgent");
+  }
+
+  function handleUseIntel(targetId) {
+    socket.emit("game:useIntel", { targetId });
+  }
+
   if (connectionError) {
     return (
       <div className="screen">
@@ -116,9 +135,29 @@ export default function App() {
         />
       );
     case "clue":
-      return <ClueScreen state={state} onSubmitClue={handleSubmitClue} />;
+      return (
+        <ClueScreen
+          state={state}
+          onSubmitClue={handleSubmitClue}
+          onArmDecoy={handleArmDecoy}
+          onArmDoubleAgent={handleArmDoubleAgent}
+          onUseIntel={handleUseIntel}
+          intelResult={intelResult}
+          onDismissIntel={() => setIntelResult(null)}
+        />
+      );
     case "vote":
-      return <VoteScreen state={state} onVote={handleVote} />;
+      return (
+        <VoteScreen
+          state={state}
+          onVote={handleVote}
+          onArmDecoy={handleArmDecoy}
+          onArmDoubleAgent={handleArmDoubleAgent}
+          onUseIntel={handleUseIntel}
+          intelResult={intelResult}
+          onDismissIntel={() => setIntelResult(null)}
+        />
+      );
     case "mrwhiteGuess":
       return <MrWhiteGuessScreen state={state} onSubmitGuess={handleSubmitGuess} />;
     case "reveal":

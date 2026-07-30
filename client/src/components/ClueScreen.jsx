@@ -2,8 +2,17 @@ import { useState } from "react";
 import PlayerAvatar from "./PlayerAvatar.jsx";
 import WordCard from "./WordCard.jsx";
 import Timer from "./Timer.jsx";
+import GadgetPanel from "./GadgetPanel.jsx";
 
-export default function ClueScreen({ state, onSubmitClue }) {
+export default function ClueScreen({
+  state,
+  onSubmitClue,
+  onArmDecoy,
+  onArmDoubleAgent,
+  onUseIntel,
+  intelResult,
+  onDismissIntel,
+}) {
   const [clue, setClue] = useState("");
   const me = state.players.find((p) => p.id === state.you);
   const isMyTurn = state.turnPlayerId === state.you;
@@ -69,13 +78,33 @@ export default function ClueScreen({ state, onSubmitClue }) {
 
         <div className="player-strip">
           {state.players.map((p) => (
-            <div key={p.id} className="player-strip-item">
+            <div
+              key={p.id}
+              className={
+                p.id === state.turnPlayerId
+                  ? "player-strip-item is-turn"
+                  : "player-strip-item"
+              }
+            >
               <PlayerAvatar name={p.name} size={32} dimmed={!p.alive} />
               <span className={p.alive ? "" : "strikethrough"}>{p.name}</span>
               {p.hasSubmittedClue && p.alive && <span className="check">✓</span>}
             </div>
           ))}
         </div>
+
+        {me?.alive && (
+          <GadgetPanel
+            me={me}
+            phase={state.phase}
+            players={state.players}
+            onArmDecoy={onArmDecoy}
+            onArmDoubleAgent={onArmDoubleAgent}
+            onUseIntel={onUseIntel}
+            intelResult={intelResult}
+            onDismissIntel={onDismissIntel}
+          />
+        )}
       </div>
     </div>
   );

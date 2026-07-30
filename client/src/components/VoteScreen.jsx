@@ -1,7 +1,16 @@
 import PlayerAvatar from "./PlayerAvatar.jsx";
 import Timer from "./Timer.jsx";
+import GadgetPanel from "./GadgetPanel.jsx";
 
-export default function VoteScreen({ state, onVote }) {
+export default function VoteScreen({
+  state,
+  onVote,
+  onArmDecoy,
+  onArmDoubleAgent,
+  onUseIntel,
+  intelResult,
+  onDismissIntel,
+}) {
   const me = state.players.find((p) => p.id === state.you);
   const alivePlayers = state.players.filter((p) => p.alive);
 
@@ -42,6 +51,19 @@ export default function VoteScreen({ state, onVote }) {
         )}
 
         {me?.hasVoted && <p className="waiting-text">Vote locked in. Waiting on others…</p>}
+
+        {me?.alive && (
+          <GadgetPanel
+            me={me}
+            phase={state.phase}
+            players={state.players}
+            onArmDecoy={onArmDecoy}
+            onArmDoubleAgent={onArmDoubleAgent}
+            onUseIntel={onUseIntel}
+            intelResult={intelResult}
+            onDismissIntel={onDismissIntel}
+          />
+        )}
       </div>
     </div>
   );

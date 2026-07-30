@@ -16,6 +16,9 @@ import {
   continueToNextRound,
   resetToLobby,
   updateSettings,
+  useIntel,
+  armDecoy,
+  armDoubleAgent,
   getRoom,
   broadcastRoom,
   setConnected,
@@ -108,6 +111,32 @@ io.on("connection", (socket) => {
     const code = socketRoom.get(socket.id);
     if (!code) return;
     const { room, error } = submitVote(code, socket.id, votedId);
+    if (error) return socket.emit("room:error", error);
+    broadcastRoom(io, room);
+  });
+
+  socket.on("game:useIntel", ({ targetId } = {}) => {
+    const code = socketRoom.get(socket.id);
+    if (!code) return;
+    const { room, error, targetName, targetRole } = useIntel(code, socket.id, targetId);
+    if (error) return socket.emit("room:error", error);
+    // Private result — only the requesting socket learns the peeked role.
+    socket.emit("gadget:intelResult", { targetName, targetRole });
+    broadcastRoom(io, room);
+  });
+
+  socket.on("game:armDecoy", () => {
+    const code = socketRoom.get(socket.id);
+    if (!code) return;
+    const { room, error } = armDecoy(code, socket.id);
+    if (error) return socket.emit("room:error", error);
+    broadcastRoom(io, room);
+  });
+
+  socket.on("game:armDoubleAgent", () => {
+    const code = socketRoom.get(socket.id);
+    if (!code) return;
+    const { room, error } = armDoubleAgent(code, socket.id);
     if (error) return socket.emit("room:error", error);
     broadcastRoom(io, room);
   });

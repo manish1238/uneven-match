@@ -38,6 +38,16 @@ function clamp(n, { min, max }) {
   return Math.min(max, Math.max(min, Math.round(Number(n))));
 }
 
+// One random gadget per player per game — a small hidden-ability layer that
+// adds a second kind of bluffing (do you reveal you're holding Decoy by
+// surviving a vote you should've lost?) on top of the core role bluff.
+const GADGETS = ["intel", "decoy", "doubleagent"];
+export const GADGET_INFO = {
+  intel: { label: "Intel", icon: "🔍", hint: "Secretly peek one player's role during voting." },
+  decoy: { label: "Decoy", icon: "🛡️", hint: "Arm it to survive if you'd be voted out this round." },
+  doubleagent: { label: "Double Agent", icon: "🎯", hint: "Arm it to make your vote count twice." },
+};
+
 function newPlayer(id, name, isHost) {
   return {
     id,
@@ -50,6 +60,10 @@ function newPlayer(id, name, isHost) {
     hasVoted: false,
     score: 0,
     connected: true,
+    gadget: null, // 'intel' | 'decoy' | 'doubleagent', assigned at game start
+    gadgetUsed: false,
+    decoyArmed: false,
+    doubleAgentArmed: false,
   };
 }
 
@@ -289,6 +303,10 @@ export function startGame(code, requesterId, category) {
       p.role = "civilian";
       p.word = room.wordPair.civilian;
     }
+    p.gadget = GADGETS[Math.floor(Math.random() * GADGETS.length)];
+    p.gadgetUsed = false;
+    p.decoyArmed = false;
+    p.doubleAgentArmed = false;
   }
 
   room.round = 1;
@@ -353,9 +371,17 @@ function resolveVotes(room) {
   clearRoomTimer(room);
   room.voteEndsAt = null;
 
+  // Double Agent: an armed vote counts twice, consumed the moment it's
+  // tallied (whether or not it ends up mattering to the outcome).
   const tally = new Map();
-  for (const votedId of room.votes.values()) {
-    tally.set(votedId, (tally.get(votedId) || 0) + 1);
+  for (const [voterId, votedId] of room.votes.entries()) {
+    const voter = room.players.get(voterId);
+    const weight = voter?.doubleAgentArmed && !voter.gadgetUsed ? 2 : 1;
+    tally.set(votedId, (tally.get(votedId) || 0) + weight);
+    if (weight === 2) {
+      voter.gadgetUsed = true;
+      voter.doubleAgentArmed = false;
+    }
   }
 
   let maxVotes = 0;
@@ -371,14 +397,28 @@ function resolveVotes(room) {
 
   let eliminatedId = null;
   let eliminatedRole = null;
+  let decoySavedName = null;
   if (leaders.length === 1) {
     const eliminated = room.players.get(leaders[0]);
     // Guard against voting for someone who disconnected before votes resolved.
     if (eliminated) {
-      eliminatedId = leaders[0];
-      eliminated.alive = false;
-      eliminatedRole = eliminated.role;
+      if (eliminated.decoyArmed && !eliminated.gadgetUsed) {
+        // Decoy: survive this elimination instead of dying. One-time use.
+        eliminated.gadgetUsed = true;
+        eliminated.decoyArmed = false;
+        decoySavedName = eliminated.name;
+      } else {
+        eliminatedId = leaders[0];
+        eliminated.alive = false;
+        eliminatedRole = eliminated.role;
+      }
     }
+  }
+
+  // Armed-but-unused gadgets don't carry over past the round they were armed.
+  for (const p of room.players.values()) {
+    p.decoyArmed = false;
+    p.doubleAgentArmed = false;
   }
 
   const resultBase = {
@@ -387,6 +427,7 @@ function resolveVotes(room) {
     eliminatedId,
     eliminatedName: eliminatedId ? room.players.get(eliminatedId).name : null,
     eliminatedRole,
+    decoySavedName,
     tie: leaders.length > 1,
   };
 
@@ -403,6 +444,61 @@ function resolveVotes(room) {
   room.lastResult = resultBase;
   room.phase = "reveal";
   checkWinCondition(room);
+}
+
+// Intel: a private, one-time peek at another alive player's role. Doesn't
+// touch room.phase/broadcastable state beyond marking the gadget used — the
+// actual revealed role is returned directly to the caller (index.js emits
+// it only to the requesting socket, never broadcast).
+export function useIntel(code, playerId, targetId) {
+  const room = getRoom(code);
+  if (!room) return { error: "Room not found." };
+  const player = room.players.get(playerId);
+  if (!player || !player.alive) return { error: "You can't do that right now." };
+  if (player.gadget !== "intel") return { error: "You don't have this gadget." };
+  if (player.gadgetUsed) return { error: "You've already used your gadget this game." };
+  if (room.phase !== "vote") return { error: "Intel can only be used while voting." };
+  if (targetId === playerId) return { error: "Pick someone else to peek at." };
+  const target = room.players.get(targetId);
+  if (!target || !target.alive) return { error: "Invalid target." };
+
+  player.gadgetUsed = true;
+  return { room, targetName: target.name, targetRole: target.role };
+}
+
+// Decoy: arm during the clue or vote phase; if you're the sole player voted
+// out this round, you survive instead (consuming the gadget either way it
+// resolves — armed-and-unused fizzles out at round end, see resolveVotes).
+export function armDecoy(code, playerId) {
+  const room = getRoom(code);
+  if (!room) return { error: "Room not found." };
+  const player = room.players.get(playerId);
+  if (!player || !player.alive) return { error: "You can't do that right now." };
+  if (player.gadget !== "decoy") return { error: "You don't have this gadget." };
+  if (player.gadgetUsed) return { error: "You've already used your gadget this game." };
+  if (room.phase !== "clue" && room.phase !== "vote")
+    return { error: "Arm this before the vote resolves." };
+  if (player.decoyArmed) return { error: "Already armed for this round." };
+
+  player.decoyArmed = true;
+  return { room };
+}
+
+// Double Agent: arm during the clue or vote phase to make your next vote
+// count twice once it's cast.
+export function armDoubleAgent(code, playerId) {
+  const room = getRoom(code);
+  if (!room) return { error: "Room not found." };
+  const player = room.players.get(playerId);
+  if (!player || !player.alive) return { error: "You can't do that right now." };
+  if (player.gadget !== "doubleagent") return { error: "You don't have this gadget." };
+  if (player.gadgetUsed) return { error: "You've already used your gadget this game." };
+  if (room.phase !== "clue" && room.phase !== "vote")
+    return { error: "Arm this before the vote resolves." };
+  if (player.doubleAgentArmed) return { error: "Already armed for this round." };
+
+  player.doubleAgentArmed = true;
+  return { room };
 }
 
 export function submitMrWhiteGuess(code, playerId, guess) {
@@ -525,6 +621,10 @@ export function resetToLobby(code, requesterId) {
     p.word = null;
     p.hasSubmittedClue = false;
     p.hasVoted = false;
+    p.gadget = null;
+    p.gadgetUsed = false;
+    p.decoyArmed = false;
+    p.doubleAgentArmed = false;
   }
 
   return { room };
@@ -538,6 +638,7 @@ export function sanitizeForPlayer(room, viewerId) {
 
   const players = [...room.players.values()].map((p) => {
     const revealThisPlayer = revealAll || !p.alive || p.id === viewerId;
+    const isViewer = p.id === viewerId;
     return {
       id: p.id,
       name: p.name,
@@ -548,7 +649,13 @@ export function sanitizeForPlayer(room, viewerId) {
       hasSubmittedClue: p.hasSubmittedClue,
       hasVoted: p.hasVoted,
       role: revealThisPlayer ? p.role : null,
-      word: p.id === viewerId || revealAll ? p.word : null,
+      word: isViewer || revealAll ? p.word : null,
+      // Gadgets stay private to their owner — nobody should know what
+      // ability another player is holding, that's part of the bluff.
+      gadget: isViewer ? p.gadget : null,
+      gadgetUsed: isViewer ? p.gadgetUsed : null,
+      decoyArmed: isViewer ? p.decoyArmed : null,
+      doubleAgentArmed: isViewer ? p.doubleAgentArmed : null,
     };
   });
 

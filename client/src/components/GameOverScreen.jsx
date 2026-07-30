@@ -18,7 +18,7 @@ export default function GameOverScreen({ state, isHost, onPlayAgain }) {
   const sorted = [...state.players].sort((a, b) => b.score - a.score);
 
   return (
-    <div className="screen">
+    <div className="screen screen--with-ad">
       <div className="card wide">
         <h2 className="winner-banner">{WINNER_BANNER[state.winner] || "Game over!"}</h2>
 
@@ -35,8 +35,9 @@ export default function GameOverScreen({ state, isHost, onPlayAgain }) {
 
         <h3>Scoreboard</h3>
         <ul className="player-list">
-          {sorted.map((p) => (
-            <li key={p.id} className="player-row">
+          {sorted.map((p, i) => (
+            <li key={p.id} className={i === 0 && p.score > 0 ? "player-row is-leader" : "player-row"}>
+              {i === 0 && p.score > 0 && <span className="trophy">🏆</span>}
               <PlayerAvatar name={p.name} />
               <span>{p.name}</span>
               <span className="badge">{p.score} pts</span>
@@ -51,9 +52,9 @@ export default function GameOverScreen({ state, isHost, onPlayAgain }) {
         ) : (
           <p className="waiting-text">Waiting for the host to start a new game…</p>
         )}
-
-        <AdSlot label="Game Over" slot="9542895200" format="fluid" layout="in-article" />
       </div>
+
+      <AdSlot label="Game Over" slot="9542895200" format="fluid" layout="in-article" />
     </div>
   );
 }
