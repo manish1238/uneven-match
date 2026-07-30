@@ -52,7 +52,7 @@ export default function GameOverScreen({ state, isHost, onPlayAgain }) {
           <p className="waiting-text">Waiting for the host to start a new game…</p>
         )}
 
-        <AdSlot label="Game Over" />
+        <AdSlot label="Game Over" slot="9542895200" format="fluid" layout="in-article" />
       </div>
     </div>
   );

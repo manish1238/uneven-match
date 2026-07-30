@@ -85,11 +85,16 @@ that didn't get added to the right `package.json`.
    isn't guaranteed — Google reviews for content/policy compliance. A
    realtime party game with light UI text may face extra scrutiny for
    "insufficient content"; if rejected, the notice tells you why.
-3. Once approved, create an ad unit in the AdSense dashboard — it gives you
-   a **publisher ID** (`ca-pub-XXXXXXXXXXXXXXXX`) and an **ad slot ID**.
+3. Once approved, create ad units in the AdSense dashboard — each one gives
+   you a "copy this code" snippet with a **slot ID** and format/layout
+   attributes. Those are wired into `client/src/components/AdSlot.jsx` and
+   passed per-placement in `Lobby.jsx` / `GameOverScreen.jsx` — if you add or
+   change an ad unit, update the `slot`/`format`/`layoutKey`/`layout` props
+   there to match AdSense's snippet, no env vars needed for slots.
 4. In the Render dashboard → your service → **Environment**, add:
-   - `VITE_ADSENSE_CLIENT_ID` = your `ca-pub-...` ID
-   - `VITE_ADSENSE_SLOT_ID` = your ad slot ID
+   - `VITE_ADSENSE_CLIENT_ID` = your **publisher ID** (`ca-pub-...`, same
+     for every ad unit — this is the one value that does need to be an env
+     var, since it's account-specific rather than tied to one placement)
 5. Uncomment the `<script>` tag in `client/index.html` (it's a single block,
    clearly marked) and uncomment the real line in `client/public/ads.txt`
    (AdSense shows you the exact line to use).

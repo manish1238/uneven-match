@@ -111,7 +111,7 @@ export default function Lobby({ state, isHost, onStart, onUpdateSettings, server
           <p className="waiting-text">Waiting for the host to start the game…</p>
         )}
 
-        <AdSlot label="Lobby" />
+        <AdSlot label="Lobby" slot="9285423062" format="fluid" layoutKey="-6t+ed+2i-1n-4w" />
       </div>
     </div>
   );
