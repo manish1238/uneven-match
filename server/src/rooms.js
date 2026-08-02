@@ -1,5 +1,5 @@
 import { customAlphabet } from "nanoid";
-import { pickWordPair } from "./words.js";
+import { pickWordPair, pickCustomPair } from "./words.js";
 
 const makeRoomCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 5);
 
@@ -10,6 +10,8 @@ const rooms = new Map();
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 10;
+const CUSTOM_WORDS_LIMIT = 40;
+const CUSTOM_WORD_MAX_LEN = 24;
 
 const SETTINGS_LIMITS = {
   clueSeconds: { min: 10, max: 120, default: 30 },
@@ -88,6 +90,7 @@ export function createRoom(hostId, hostName) {
     lastResult: null,
     winner: null,
     settings: defaultSettings(),
+    customWords: [], // host-supplied word pool, used when category === "custom"
     turnEndsAt: null,
     voteEndsAt: null,
     guessEndsAt: null,
@@ -120,6 +123,32 @@ export function updateSettings(code, requesterId, partial) {
   if (partial.includeMrWhite !== undefined) next.includeMrWhite = !!partial.includeMrWhite;
 
   room.settings = next;
+  return { room };
+}
+
+// Host-supplied word pool for the "Custom" category — inside jokes, names,
+// whatever the group wants. Dedupe case-insensitively (so "Pizza" and
+// "pizza" don't both take a slot) while keeping first-seen casing for
+// display, and cap length so one host can't paste in a novel.
+export function updateCustomWords(code, requesterId, words) {
+  const room = getRoom(code);
+  if (!room) return { error: "Room not found." };
+  if (room.hostId !== requesterId) return { error: "Only the host can set custom words." };
+  if (room.phase !== "lobby") return { error: "Can't change words mid-game." };
+
+  const seen = new Set();
+  const deduped = [];
+  for (const raw of Array.isArray(words) ? words : []) {
+    const trimmed = (raw || "").trim().slice(0, CUSTOM_WORD_MAX_LEN);
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(trimmed);
+    if (deduped.length >= CUSTOM_WORDS_LIMIT) break;
+  }
+
+  room.customWords = deduped;
   return { room };
 }
 
@@ -286,8 +315,9 @@ export function startGame(code, requesterId, category) {
   const undercoverIds = new Set(shuffled.slice(0, undercoverCount).map((p) => p.id));
   const mrWhiteId = includeMrWhite ? shuffled[undercoverCount]?.id : null;
 
-  room.wordPair = pickWordPair(category);
-  room.category = category || "random";
+  const customPair = category === "custom" ? pickCustomPair(room.customWords) : null;
+  room.wordPair = customPair || pickWordPair(category);
+  room.category = customPair ? "Custom" : category || "random";
 
   for (const p of room.players.values()) {
     p.alive = true;
@@ -672,6 +702,7 @@ export function sanitizeForPlayer(room, viewerId) {
     lastResult: room.lastResult,
     winner: room.winner || null,
     settings: room.settings,
+    customWords: room.customWords,
     turnEndsAt: room.turnEndsAt,
     voteEndsAt: room.voteEndsAt,
     guessEndsAt: room.guessEndsAt,

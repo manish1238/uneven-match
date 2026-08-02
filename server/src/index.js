@@ -16,6 +16,7 @@ import {
   continueToNextRound,
   resetToLobby,
   updateSettings,
+  updateCustomWords,
   useIntel,
   armDecoy,
   armDoubleAgent,
@@ -87,6 +88,14 @@ io.on("connection", (socket) => {
     const code = socketRoom.get(socket.id);
     if (!code) return;
     const { room, error } = updateSettings(code, socket.id, settings);
+    if (error) return socket.emit("room:error", error);
+    broadcastRoom(io, room);
+  });
+
+  socket.on("room:updateCustomWords", ({ words } = {}) => {
+    const code = socketRoom.get(socket.id);
+    if (!code) return;
+    const { room, error } = updateCustomWords(code, socket.id, words);
     if (error) return socket.emit("room:error", error);
     broadcastRoom(io, room);
   });

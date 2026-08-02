@@ -2,9 +2,14 @@ import { useState, useEffect } from "react";
 import PlayerAvatar from "./PlayerAvatar.jsx";
 import AdSlot from "./AdSlot.jsx";
 
-export default function Lobby({ state, isHost, onStart, onUpdateSettings, serverUrl }) {
+export default function Lobby({ state, isHost, onStart, onUpdateSettings, onUpdateCustomWords, serverUrl }) {
   const [categories, setCategories] = useState(["random"]);
   const [category, setCategory] = useState("random");
+  // Seeded once from the room's saved list (so a returning host sees what
+  // they already set), then left alone — we don't want a state broadcast
+  // clobbering the textarea mid-edit.
+  const [wordsText, setWordsText] = useState(() => (state.customWords || []).join(", "));
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
     fetch(`${serverUrl}/categories`)
@@ -16,6 +21,22 @@ export default function Lobby({ state, isHost, onStart, onUpdateSettings, server
   const canStart = state.players.length >= 3;
   const canUseMrWhite = state.players.length >= 5;
   const settings = state.settings || {};
+  const customWords = state.customWords || [];
+  const hasCustomWords = customWords.length >= 2;
+
+  useEffect(() => {
+    if (category === "custom" && !hasCustomWords) setCategory("random");
+  }, [category, hasCustomWords]);
+
+  function handleSaveWords() {
+    const parsed = wordsText
+      .split(/[,\n]/)
+      .map((w) => w.trim())
+      .filter(Boolean);
+    onUpdateCustomWords(parsed);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 1800);
+  }
 
   return (
     <div className="screen screen--with-ad">
@@ -87,6 +108,45 @@ export default function Lobby({ state, isHost, onStart, onUpdateSettings, server
           )}
         </div>
 
+        <div className="settings-panel custom-words-panel">
+          <h3>Custom words</h3>
+          <p className="subtitle small">
+            Add your own words — inside jokes, nicknames, anything your group will recognize.
+            Each round picks two different words from this list, one for the civilians and one
+            for the undercover players.
+          </p>
+
+          {isHost ? (
+            <>
+              <textarea
+                value={wordsText}
+                onChange={(e) => setWordsText(e.target.value)}
+                placeholder="e.g. Pineapple Pizza, Sunday Brunch, Aunt Rita, Beach Day…"
+                rows={3}
+                maxLength={2000}
+              />
+              <div className="custom-words-row">
+                <button type="button" className="btn btn-gadget" onClick={handleSaveWords}>
+                  {justSaved ? "Saved ✓" : "Save Words"}
+                </button>
+                <span className="waiting-text">
+                  {customWords.length > 0
+                    ? `${customWords.length} word${customWords.length === 1 ? "" : "s"} saved`
+                    : "No custom words saved yet"}
+                  {customWords.length > 0 && customWords.length < 2 && " — add at least 2 to use them"}
+                </span>
+              </div>
+            </>
+          ) : customWords.length > 0 ? (
+            <p className="waiting-text">
+              Host set {customWords.length} custom word{customWords.length === 1 ? "" : "s"}:{" "}
+              {customWords.join(", ")}
+            </p>
+          ) : (
+            <p className="waiting-text">The host hasn't added any custom words.</p>
+          )}
+        </div>
+
         {isHost ? (
           <div className="start-controls">
             <label>
@@ -97,6 +157,7 @@ export default function Lobby({ state, isHost, onStart, onUpdateSettings, server
                     {c === "random" ? "Random" : c}
                   </option>
                 ))}
+                {hasCustomWords && <option value="custom">🎉 Custom (your words)</option>}
               </select>
             </label>
             <button

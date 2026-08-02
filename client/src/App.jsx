@@ -70,6 +70,10 @@ export default function App() {
     socket.emit("room:updateSettings", settings);
   }
 
+  function handleUpdateCustomWords(words) {
+    socket.emit("room:updateCustomWords", { words });
+  }
+
   function handleSubmitGuess(guess) {
     socket.emit("game:mrWhiteGuess", { guess });
   }
@@ -131,6 +135,7 @@ export default function App() {
           isHost={isHost}
           onStart={handleStart}
           onUpdateSettings={handleUpdateSettings}
+          onUpdateCustomWords={handleUpdateCustomWords}
           serverUrl={SERVER_URL}
         />
       );

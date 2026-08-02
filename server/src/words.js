@@ -54,3 +54,18 @@ export function pickWordPair(category) {
   const list = pool.length ? pool : WORD_PAIRS;
   return list[Math.floor(Math.random() * list.length)];
 }
+
+// A host-supplied word list (inside jokes, names, whatever the group finds
+// funny) instead of the built-in categories. Unlike WORD_PAIRS these aren't
+// curated as "similar" pairs — any two distinct words from the list are
+// picked at random, which is the point: it's personal, not balanced.
+export function pickCustomPair(words) {
+  const pool = [...new Set((words || []).map((w) => w.trim()).filter(Boolean))];
+  if (pool.length < 2) return null;
+
+  const i = Math.floor(Math.random() * pool.length);
+  let j = Math.floor(Math.random() * (pool.length - 1));
+  if (j >= i) j += 1; // pick a second, distinct index without retry-looping
+
+  return { category: "Custom", civilian: pool[i], undercover: pool[j] };
+}

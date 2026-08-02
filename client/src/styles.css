@@ -196,6 +196,23 @@ body::after {
   line-height: 1.5;
 }
 
+.subtitle.small {
+  text-align: left;
+  font-size: 0.82rem;
+  margin-bottom: 12px;
+}
+
+.custom-words-panel textarea {
+  margin-bottom: 10px;
+}
+
+.custom-words-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .join-form {
   display: flex;
   flex-direction: column;
@@ -211,7 +228,8 @@ body::after {
 }
 
 input,
-select {
+select,
+textarea {
   font-size: 1rem;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
@@ -223,9 +241,17 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--violet);
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.4;
 }
 
 .room-code-input {
