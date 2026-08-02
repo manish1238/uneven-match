@@ -1,4 +1,5 @@
 import PlayerAvatar from "./PlayerAvatar.jsx";
+import AdSlot from "./AdSlot.jsx";
 
 const ROLE_LABEL = { undercover: "UNDERCOVER", civilian: "CIVILIAN", mrwhite: "MR. WHITE" };
 const ROLE_CLASS = {
@@ -12,7 +13,7 @@ export default function RevealScreen({ state, isHost, onContinue }) {
   const hadMrWhiteGuess = lastResult && "mrWhiteGuess" in lastResult;
 
   return (
-    <div className="screen">
+    <div className="screen screen--with-ad">
       <div className="card">
         <h2>Round {lastResult?.round} results</h2>
 
@@ -63,6 +64,8 @@ export default function RevealScreen({ state, isHost, onContinue }) {
           <p className="waiting-text">Waiting for the host to continue…</p>
         )}
       </div>
+
+      <AdSlot label="Round Results" slot="7464240788" format="auto" />
     </div>
   );
 }

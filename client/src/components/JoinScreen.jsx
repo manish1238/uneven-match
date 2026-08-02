@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AdSlot from "./AdSlot.jsx";
 
 export default function JoinScreen({ onCreate, onJoin, error }) {
   const [name, setName] = useState("");
@@ -15,7 +16,7 @@ export default function JoinScreen({ onCreate, onJoin, error }) {
   }
 
   return (
-    <div className="screen join-screen">
+    <div className="screen join-screen screen--with-ad">
       <div className="card">
         <h1 className="title">🕵️ Undercover</h1>
         <p className="subtitle">
@@ -72,6 +73,8 @@ export default function JoinScreen({ onCreate, onJoin, error }) {
           </button>
         </form>
       </div>
+
+      <AdSlot label="Home" slot="9285423062" format="fluid" layoutKey="-6t+ed+2i-1n-4w" />
     </div>
   );
 }
